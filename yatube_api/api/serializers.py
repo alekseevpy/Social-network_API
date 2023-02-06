@@ -10,7 +10,7 @@ class PostSerializer(serializers.ModelSerializer):
     author = SlugRelatedField(slug_field='username', read_only=True)
 
     class Meta:
-        fields = '__all__'
+        fields = ('id', 'text', 'pub_date', 'author', 'image', 'group')
         model = Post
 
 
@@ -20,11 +20,10 @@ class CommentSerializer(serializers.ModelSerializer):
         read_only=True,
         default=serializers.CurrentUserDefault(),
     )
-    post = serializers.PrimaryKeyRelatedField(
-        read_only=True)
 
     class Meta:
-        fields = '__all__'
+        fields = ('id', 'author', 'post', 'text', 'created')
+        read_only_fields = ('post', )
         model = Comment
 
 
@@ -46,7 +45,7 @@ class FollowSerializer(serializers.ModelSerializer):
     )
 
     class Meta:
-        fields = '__all__'
+        fields = ('user', 'following')
         model = Follow
         validators = [
             UniqueTogetherValidator(
@@ -55,8 +54,8 @@ class FollowSerializer(serializers.ModelSerializer):
             )
         ]
 
-    def validate(self, data):
-        if data.get('user') == data.get('following'):
+    def validate_following(self, data):
+        if data == self.context.get('request').user:
             raise serializers.ValidationError(
                 'Нельзя подписаться на самого себя!')
         return data
